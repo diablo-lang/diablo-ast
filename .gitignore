@@ -1,5 +1,6 @@
 ### diablo-ast ###
 diablo
+generate_ast
 
 ### Nim ###
 nimcache/

@@ -1,0 +1,48 @@
+type
+  Token* = enum
+    LeftParen,
+    RightParen,
+    LeftBrace,
+    RightBrace,
+    Comma,
+    Dot,
+    Minus,
+    Plus,
+    Semicolon,
+    Slash,
+    Star,
+    Bang,
+    BangEqual,
+    Equal,
+    EqualEqual,
+    Greater,
+    GreaterEqual,
+    Less,
+    LessEqual,
+    Identifier,
+    StringLiteral,
+    NumericLiteral,
+    String,
+    Number,
+    And,
+    Class,
+    Else,
+    False,
+    Fn,
+    For,
+    If,
+    Null,
+    Or,
+    Print,
+    Return,
+    Super,
+    This,
+    True,
+    Var,
+    While,
+    Eof
+
+  TokenContext* = object
+    token*: Token
+    line*: int
+    lexeme*: string
