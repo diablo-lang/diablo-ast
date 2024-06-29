@@ -41,10 +41,10 @@ enum TokenType
 end
 
 class Token
-    @type : TokenType
-    @lexeme : String
-    @literal : String | Float64 | Nil
-    @line : Int32
+    property type : TokenType
+    property lexeme : String
+    property literal : String | Float64 | Nil
+    property line : Int32
 
     def initialize(@type, @lexeme, @literal, @line)
     end
@@ -55,7 +55,7 @@ class Token
 end
 
 class Scanner
-    @source : String
+    property source : String
 
     def initialize(@source)
         @had_error = false

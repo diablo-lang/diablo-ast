@@ -36,7 +36,7 @@ class Diablo
   
   def main()
     if ARGV.size > 1
-      puts "Usage: diablo [script]"
+      puts "Usage: diablo <script>"
       exit(64)
     elsif ARGV.size == 1
       run_file(ARGV[0])
