@@ -36,7 +36,7 @@ class AstPrinter < Expr::Visitor(String)
 end
 
 def main()
-    expression = Expr::Binary.new(
+    expression : Expr = Expr::Binary.new(
         Expr::Unary.new(
             Token.new(
                 TokenType::Minus, "-", nil, 1
@@ -54,4 +54,4 @@ def main()
     puts(ast_printer.print(expression))
 end
 
-main()
+# main()

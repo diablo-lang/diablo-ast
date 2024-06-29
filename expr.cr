@@ -24,7 +24,7 @@ abstract class Expr
     end
   end
   class Literal < Expr
-    property value : String | Float64 | Nil
+    property value : String | Float64 | Bool | Nil
     def initialize(@value)
     end
     def accept(visitor : Visitor)

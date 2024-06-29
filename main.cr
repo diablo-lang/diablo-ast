@@ -1,17 +1,27 @@
 require "./scanner"
 require "./error"
+require "./parser"
+require "./ast_printer"
+require "./expr"
 
 class Diablo
   def initialize
-    @had_error = false
   end
   
   def run(source)
     scanner = Scanner.new source
-    tokens, @had_error = scanner.scan_tokens()
-  
-    tokens.each do |token|
-      puts token.to_s
+    tokens = scanner.scan_tokens()
+
+    parser = Parser.new(tokens)
+    expression = parser.parse()
+    
+    if DiabloError.had_error?
+      return
+    end
+
+    unless expression.nil?
+      ast_printer = AstPrinter.new
+      puts ast_printer.print(expression)
     end
   end
   
@@ -21,7 +31,7 @@ class Diablo
       line = gets
       break if line.nil?
       run(line)
-      @had_error = false
+      DiabloError.set_error(false)
     end
   end
   
@@ -31,7 +41,7 @@ class Diablo
     end
     run(bytes)
   
-    exit(65) if @had_error
+    exit(65) if DiabloError.had_error?
   end
   
   def main()

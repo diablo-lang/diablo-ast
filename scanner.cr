@@ -58,7 +58,6 @@ class Scanner
     property source : String
 
     def initialize(@source)
-        @had_error = false
         @start = 0
         @current = 0
         @line = 1
@@ -93,7 +92,7 @@ class Scanner
             scan_token()
         end
         @tokens.push(Token.new(TokenType::Eof, "", nil, @line))
-        return @tokens, @had_error
+        return @tokens
     end
 
     def advance()
@@ -162,7 +161,7 @@ class Scanner
                 identifier()
             else
                 DiabloError.error(@line, "Unexpected character")
-                @had_error = true
+                DiabloError.set_error(true)
             end
         end
     end
@@ -193,7 +192,7 @@ class Scanner
 
         if is_at_end()
             DiabloError.error(@line, "Unterminated string")
-            @had_error = true
+            DiabloError.set_error(true)
             return
         end
 
