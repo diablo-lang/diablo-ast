@@ -16,7 +16,7 @@ class GenerateAst
                 "expression" => base_name
             },
             "Literal" => {
-                "value" => "String | Float64 | Bool | Nil"
+                "value" => "LiteralObject"
             },
             "Unary" => {
                 "operator" => "Token",

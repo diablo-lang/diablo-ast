@@ -3,8 +3,11 @@ require "./error"
 require "./parser"
 require "./ast_printer"
 require "./expr"
+require "./interpreter"
 
 class Diablo
+  @@interpreter : Interpreter = Interpreter.new
+
   def initialize
   end
   
@@ -20,8 +23,7 @@ class Diablo
     end
 
     unless expression.nil?
-      ast_printer = AstPrinter.new
-      puts ast_printer.print(expression)
+      @@interpreter.interpret(expression)
     end
   end
   
@@ -42,6 +44,7 @@ class Diablo
     run(bytes)
   
     exit(65) if DiabloError.had_error?
+    exit(70) if DiabloError.had_runtime_error?
   end
   
   def main()

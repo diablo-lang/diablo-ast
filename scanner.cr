@@ -1,3 +1,5 @@
+alias LiteralObject = Bool | Char | Float64 | Int32 | Nil | String
+
 enum TokenType
     LeftParen
     RightParen
@@ -43,7 +45,7 @@ end
 class Token
     property type : TokenType
     property lexeme : String
-    property literal : String | Float64 | Nil
+    property literal : LiteralObject
     property line : Int32
 
     def initialize(@type, @lexeme, @literal, @line)
