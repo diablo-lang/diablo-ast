@@ -5,25 +5,44 @@ class GenerateAst
             exit(64)
         end
         output_dir = ARGV[0]
-        base_name = "Expr"
-        types = {
+        expr_types = {
             "Binary" => {
-                "left" => base_name,
+                "left" => "Expr",
                 "operator" => "Token",
-                "right" => base_name
+                "right" => "Expr"
             },
             "Grouping" => {
-                "expression" => base_name
+                "expression" => "Expr"
             },
             "Literal" => {
                 "value" => "LiteralObject"
             },
             "Unary" => {
                 "operator" => "Token",
-                "right" => base_name
+                "right" => "Expr"
+            },
+            "Variable" => {
+                "name" => "Token"
             }
         }
-        define_ast(output_dir, "Expr", types)
+        define_ast(output_dir, "Expr", expr_types)
+
+        stmt_types = {
+            "Block" => {
+                "statements" => "Array(Stmt)"
+            },
+            "Expression" => {
+                "expression" => "Expr"
+            },
+            "Print" => {
+                "expression" => "Expr"
+            },
+            "Var" => {
+                "name" => "Token",
+                "initializer" => "Expr | Nil"
+            }
+        }
+        define_ast(output_dir, "Stmt", stmt_types)
     end
 
     def define_ast(output_dir, base_name, types)
@@ -60,7 +79,7 @@ class GenerateAst
     end
 
     def define_visitor(file, base_name, types)
-        file.puts("  abstract class Visitor(T)")
+        file.puts("  module Visitor(T)")
         types.each_key do |class_name|
             file.puts("    abstract def visit_#{class_name.downcase}_#{base_name.downcase}(#{base_name.downcase} : #{class_name})")
         end

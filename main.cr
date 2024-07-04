@@ -4,6 +4,7 @@ require "./parser"
 require "./ast_printer"
 require "./expr"
 require "./interpreter"
+require "./stmt"
 
 class Diablo
   @@interpreter : Interpreter = Interpreter.new
@@ -16,14 +17,14 @@ class Diablo
     tokens = scanner.scan_tokens()
 
     parser = Parser.new(tokens)
-    expression = parser.parse()
+    statements = parser.parse()
     
     if DiabloError.had_error?
       return
     end
 
-    unless expression.nil?
-      @@interpreter.interpret(expression)
+    unless statements.nil?
+      @@interpreter.interpret(statements)
     end
   end
   

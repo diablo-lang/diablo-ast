@@ -5,16 +5,88 @@ class Parser
         @current = 0
     end
 
-    def parse() : Expr | Nil
-        begin
-            return expression()
-        rescue DiabloError::ParseError
-            return nil
+    def parse() : Array(Stmt | Nil)
+        statements = Array(Stmt | Nil).new
+
+        while !is_at_end()
+            statements.push(declaration())
         end
+
+        return statements
     end
 
     def expression() : Expr
         return equality()
+    end
+
+    def assignment() : Expr
+        expr : Expr = equality()
+
+        if match(TokenType::Equal)
+            equals : Token = previous()
+            value : Expr = assignment()
+
+            if expr.is_a?(Expr::Variable)
+                name : Token = expr.as(Expr::Variable).name
+                return Expr::Assign.new(name, value)
+            end
+
+            error(equals, "Invalid assignment target.")
+        end
+    end
+
+    def declaration() : Stmt | Nil
+        begin
+            return var_declaration() if match(TokenType::Var)
+            return statement()
+        rescue error : DiabloError::ParseError
+            synchronize()
+            return nil
+        end
+    end
+
+    def statement() : Stmt
+        return print_statement() if match(TokenType::Print)
+        return Stmt::Block.new(block()) if match(TokenType::LeftBrace)
+        return expression_statement()
+    end
+
+    def print_statement() : Stmt
+        value = expression()
+        consume(TokenType::Semicolon, "Expect ';' after value.")
+        return Stmt::Print.new(value)
+    end
+
+    def var_declaration() : Stmt
+        name = consume(TokenType::Identifier, "Expect variable name.")
+        
+        initializer = nil
+        if match(TokenType::Equal)
+            initializer = expression()
+        end
+
+        consume(TokenType::Semicolon, "Expect ';' after variable declaration.")
+        return Stmt::Var.new(name, initializer)
+    end
+
+    def expression_statement() : Stmt
+        expr = expression()
+        consume(TokenType::Semicolon, "Expect ';' after expression.")
+        return Stmt::Expression.new(expr)
+    end
+
+    def block() : Array(Stmt)
+        statements : Array(Stmt) = [] of Stmt
+
+        while !check(TokenType::RightBrace) && !is_at_end()
+            declaration = declaration()
+            if !declaration.nil?
+                statements.push(declaration.not_nil!)
+            end
+        end
+
+        consume(TokenType::RightBrace, "Expect '}' after block.")
+        return statements
     end
 
     def equality() : Expr
@@ -82,6 +154,10 @@ class Parser
 
         if match(TokenType::Number, TokenType::String)
             return Expr::Literal.new(previous().literal)
+        end
+
+        if match(TokenType::Identifier)
+            return Expr::Variable.new(previous())
         end
 
         if match(TokenType::LeftParen)

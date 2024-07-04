@@ -1,9 +1,10 @@
 abstract class Expr
-  abstract class Visitor(T)
+  module Visitor(T)
     abstract def visit_binary_expr(expr : Binary)
     abstract def visit_grouping_expr(expr : Grouping)
     abstract def visit_literal_expr(expr : Literal)
     abstract def visit_unary_expr(expr : Unary)
+    abstract def visit_variable_expr(expr : Variable)
   end
   class Binary < Expr
     property left : Expr
@@ -38,6 +39,14 @@ abstract class Expr
     end
     def accept(visitor : Visitor)
       return visitor.visit_unary_expr(self)
+    end
+  end
+  class Variable < Expr
+    property name : Token
+    def initialize(@name)
+    end
+    def accept(visitor : Visitor)
+      return visitor.visit_variable_expr(self)
     end
   end
   abstract def accept(visitor : Visitor(T))

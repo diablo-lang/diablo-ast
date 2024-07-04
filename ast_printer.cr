@@ -1,7 +1,9 @@
 require "./expr.cr"
 require "./scanner.cr"
 
-class AstPrinter < Expr::Visitor(String)
+class AstPrinter
+    include Expr::Visitor(String)
+
     def print(expr : Expr)
         return expr.accept(self)
     end
@@ -21,6 +23,10 @@ class AstPrinter < Expr::Visitor(String)
 
     def visit_unary_expr(expr : Expr::Unary)
         return parenthesize(expr.operator.lexeme, expr.right)
+    end
+
+    def visit_variable_expr(expr : Expr::Variable)
+        return "VAR"
     end
 
     def parenthesize(name : String, *exprs : Expr)

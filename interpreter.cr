@@ -1,8 +1,20 @@
-class Interpreter < Expr::Visitor(Value)
-    def interpret(expression : Expr)
+require "./stmt"
+require "./expr"
+require "./environment"
+
+class Interpreter
+    include Expr::Visitor(Value)
+    include Stmt::Visitor(Nil)
+
+    def initialize()
+        @environment = Environment.new()
+    end
+
+    def interpret(statements : Array(Stmt | Nil))
         begin
-            value = evaluate(expression)
-            puts stringify(value)
+            statements.each do |statement|
+                execute(statement)
+            end
         rescue error : DiabloError::RuntimeError
             DiabloError.runtime_error(error)
         end
@@ -27,6 +39,10 @@ class Interpreter < Expr::Visitor(Value)
         return nil
     end
 
+    def visit_variable_expr(expr : Expr::Variable)
+        return @environment.get(expr.name)
+    end
+
     def check_number_operand(operator : Token, operand : Object)
         return if operand.is_a?(Float64)
         raise DiabloError::RuntimeError.new(operator, "Operand must be a number.")
@@ -49,6 +65,59 @@ class Interpreter < Expr::Visitor(Value)
 
     def evaluate(expr : Expr)
         expr.accept(self)
+    end
+
+    def execute(stmt : Stmt | Nil)
+        if !stmt.nil?
+            stmt.accept(self)
+        else
+            raise Exception.new
+        end
+    end
+
+    def execute_block(statements : Array(Stmt | Nil), environment : Environment)
+        previous : Environment = @environment
+        begin
+          @environment = environment
+
+          statements.each do |statement|
+            execute(statement)
+          end
+        ensure
+            @environment = previous
+        end
+    end
+
+    def visit_block_stmt(stmt : Stmt::Block)
+        execute_block(stmt.statements, Environment.new(@environment))
+        return nil
+    end
+
+    def visit_expression_stmt(stmt : Stmt::Expression)
+        evaluate(stmt.expression)
+        return nil
+    end
+
+    def visit_print_stmt(stmt : Stmt::Print)
+        value = evaluate(stmt.expression)
+        puts stringify(value)
+        return nil
+    end
+
+    def visit_var_stmt(stmt : Stmt::Var)
+        value = nil
+        if !stmt.initializer.nil?
+            value = evaluate(stmt.initializer.not_nil!)
+        end
+
+        @environment.define(stmt.name.lexeme, value)
+        return nil
+    end
+
+    def visit_assign_expr(expr : Expr::Assign)
+        value : LiteralObject = evaluate(expr.value)
+        @environment.assign(expr.name, value)
+        return value
     end
 
     def visit_binary_expr(expr : Expr)
