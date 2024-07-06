@@ -6,9 +6,7 @@ class Interpreter
     include Expr::Visitor(Value)
     include Stmt::Visitor(Nil)
 
-    def initialize()
-        @environment = Environment.new()
-    end
+    @environment = Environment.new
 
     def interpret(statements : Array(Stmt | Nil))
         begin
@@ -22,6 +20,22 @@ class Interpreter
 
     def visit_literal_expr(expr : Expr::Literal)
         expr.value
+    end
+
+    def visit_logical_expr(expr : Expr::Logical)
+        left : LiteralObject = evaluate(expr.left)
+
+        if expr.operator.type == TokenType::Or
+            if is_truthy(left)
+                return left
+            end
+        else
+            if !is_truthy(left)
+                return left
+            end
+        end
+
+        return evaluate(expr.right)
     end
 
     def visit_unary_expr(expr : Expr::Unary)
@@ -98,6 +112,16 @@ class Interpreter
         return nil
     end
 
+    def visit_if_stmt(stmt : Stmt::If)
+        if is_truthy(evaluate(stmt.condition))
+            execute(stmt.then_branch)
+        elsif !stmt.else_branch.nil?
+            execute(stmt.else_branch)
+        end
+
+        return nil
+    end
+
     def visit_print_stmt(stmt : Stmt::Print)
         value = evaluate(stmt.expression)
         puts stringify(value)
@@ -111,6 +135,13 @@ class Interpreter
         end
 
         @environment.define(stmt.name.lexeme, value)
+        return nil
+    end
+
+    def visit_while_stmt(stmt : Stmt::While)
+        while is_truthy(evaluate(stmt.condition))
+            execute(stmt.body)
+        end
         return nil
     end
 

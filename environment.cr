@@ -1,13 +1,20 @@
 class Environment
     property values : Hash(String, LiteralObject)
+    property enclosing : Environment | Nil
 
     def initialize(@enclosing : Environment? = nil)
-        @values = {} of String => LiteralObject
+        @values = Hash(String, LiteralObject).new
+        @enclosing = nil
+    end
+
+    def initialize(enclosing : Environment)
+        @values = Hash(String, LiteralObject).new
+        @enclosing = enclosing
     end
 
     def get(name : Token) : Object
         if @values.has_key?(name.lexeme)
-            return values[name.lexeme]
+            return @values[name.lexeme]
         end
 
         if !@enclosing.nil?
@@ -24,14 +31,14 @@ class Environment
         end
 
         if !@enclosing.nil?
-            @enclosing.assign(name, value)
+            @enclosing.not_nil!.assign(name, value)
             return
         end
 
         raise DiabloError::RuntimeError.new(name, "Undefined variable '#{name.lexeme}'.")
     end
 
-    def define(name, value)
+    def define(name : String, value : LiteralObject)
         @values[name] = value
     end
 end

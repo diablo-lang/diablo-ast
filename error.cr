@@ -1,5 +1,10 @@
 class DiabloError
     class ParseError < RuntimeError
+        property token : Token
+
+        def initialize(@token, @message)
+            super(@message)
+        end
     end
 
     class RuntimeError < RuntimeError

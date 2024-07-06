@@ -16,11 +16,11 @@ class Parser
     end
 
     def expression() : Expr
-        return equality()
+        return assignment()
     end
 
     def assignment() : Expr
-        expr : Expr = equality()
+        expr : Expr = or()
 
         if match(TokenType::Equal)
             equals : Token = previous()
@@ -33,6 +33,31 @@ class Parser
 
             error(equals, "Invalid assignment target.")
         end
+
+        return expr
+    end
+
+    def or() : Expr
+        expr : Expr = and()
+
+        while match(TokenType::Or)
+            operator : Token = previous()
+            right : Expr = and()
+            expr = Expr::Logical.new(expr, operator, right)
+        end
+
+        return expr
+    end
+
+    def and() : Expr
+        expr : Expr = equality()
+        while match(TokenType::And)
+            operator : Token = previous()
+            right : Expr = equality()
+            expr = Expr::Logical.new(expr, operator, right)
+        end
+
+        return expr
     end
 
     def declaration() : Stmt | Nil
@@ -40,15 +65,72 @@ class Parser
             return var_declaration() if match(TokenType::Var)
             return statement()
         rescue error : DiabloError::ParseError
+            p "HERE"
             synchronize()
             return nil
         end
     end
 
     def statement() : Stmt
+        return for_statement() if match(TokenType::For)
+        return if_statement() if match(TokenType::If)
         return print_statement() if match(TokenType::Print)
+        return while_statement() if match(TokenType::While)
         return Stmt::Block.new(block()) if match(TokenType::LeftBrace)
         return expression_statement()
+    end
+
+    def for_statement() : Stmt
+        consume(TokenType::LeftParen, "Expect '(' after 'for'.")
+
+        initializer = nil
+        if match(TokenType::Semicolon)
+            initializer = nil
+        elsif match(TokenType::Var)
+            initializer = var_declaration()
+        else
+            initializer = expression_statement()
+        end
+
+        condition = nil
+        if !check(TokenType::RightParen)
+            increment = expression()
+        end
+
+        consume(TokenType::RightParen, "Expect ')' after for clauses.")
+
+        body = statement()
+
+        if !increment.nil?
+            body = Stmt::Block.new([body, Stmt::Expression.new(increment)])
+        end
+
+        if condition.nil?
+            condition = Expr::Literal.new(true)
+        end
+
+        body = Stmt::While.new(condition, body)
+
+        if !initializer.nil?
+            body = Stmt::Block.new([initializer, body])
+        end
+
+        return body
+    end
+
+    def if_statement() : Stmt
+        consume(TokenType::LeftParen, "Expect '(' after 'if'.");
+        condition : Expr = expression()
+        consume(TokenType::RightParen, "Expect ')' after 'if' condition.");
+
+        then_branch = statement()
+        else_branch = nil
+
+        if match(TokenType::Else)
+            else_branch = statement()
+        end
+
+        return Stmt::If.new(condition, then_branch, else_branch)
     end
 
     def print_statement() : Stmt
@@ -67,6 +149,15 @@ class Parser
 
         consume(TokenType::Semicolon, "Expect ';' after variable declaration.")
         return Stmt::Var.new(name, initializer)
+    end
+
+    def while_statement() : Stmt
+        consume(TokenType::LeftParen, "Expect '(' after 'while'.")
+        condition : Expr = expression()
+        consume(TokenType::RightParen, "Expect ')' after condition.")
+        body : Stmt = statement()
+
+        return Stmt::While.new(condition, body)
     end
 
     def expression_statement() : Stmt
@@ -215,7 +306,7 @@ class Parser
 
     def error(token : Token, message : String) : DiabloError::ParseError
         DiabloError.error(token, message)
-        return DiabloError::ParseError.new()
+        return DiabloError::ParseError.new(token, message)
     end
 
     def synchronize()

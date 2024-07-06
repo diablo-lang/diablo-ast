@@ -8,6 +8,10 @@ class AstPrinter
         return expr.accept(self)
     end
 
+    def visit_assign_expr(expr : Expr::Assign)
+        return "ASSIGN"
+    end
+
     def visit_binary_expr(expr : Expr::Binary)
         return parenthesize(expr.operator.lexeme, expr.left, expr.right)
     end
@@ -27,6 +31,10 @@ class AstPrinter
 
     def visit_variable_expr(expr : Expr::Variable)
         return "VAR"
+    end
+
+    def visit_logical_expr(expr : Expr::Logical)
+        return "LOGICAL"
     end
 
     def parenthesize(name : String, *exprs : Expr)

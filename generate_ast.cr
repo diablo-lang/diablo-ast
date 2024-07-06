@@ -6,6 +6,10 @@ class GenerateAst
         end
         output_dir = ARGV[0]
         expr_types = {
+            "Assign" => {
+                "name" => "Token",
+                "value" => "Expr"
+            },
             "Binary" => {
                 "left" => "Expr",
                 "operator" => "Token",
@@ -16,6 +20,11 @@ class GenerateAst
             },
             "Literal" => {
                 "value" => "LiteralObject"
+            },
+            "Logical" => {
+                "left" => "Expr",
+                "operator" => "Token",
+                "right" => "Expr"
             },
             "Unary" => {
                 "operator" => "Token",
@@ -34,12 +43,21 @@ class GenerateAst
             "Expression" => {
                 "expression" => "Expr"
             },
+            "If" => {
+                "condition" => "Expr",
+                "then_branch" => "Stmt",
+                "else_branch" => "Stmt | Nil",
+            },
             "Print" => {
                 "expression" => "Expr"
             },
             "Var" => {
                 "name" => "Token",
                 "initializer" => "Expr | Nil"
+            },
+            "While" => {
+                "condition" => "Expr",
+                "body" => "Stmt"
             }
         }
         define_ast(output_dir, "Stmt", stmt_types)
