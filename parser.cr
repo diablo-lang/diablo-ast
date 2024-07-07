@@ -62,6 +62,7 @@ class Parser
 
     def declaration() : Stmt | Nil
         begin
+            return function("function") if match(TokenType::Fun)
             return var_declaration() if match(TokenType::Var)
             return statement()
         rescue error : DiabloError::ParseError
@@ -75,6 +76,7 @@ class Parser
         return for_statement() if match(TokenType::For)
         return if_statement() if match(TokenType::If)
         return print_statement() if match(TokenType::Print)
+        return return_statement() if match(TokenType::Return)
         return while_statement() if match(TokenType::While)
         return Stmt::Block.new(block()) if match(TokenType::LeftBrace)
         return expression_statement()
@@ -93,10 +95,16 @@ class Parser
         end
 
         condition = nil
+        if !check(TokenType::Semicolon)
+            condition = expression()
+        end
+        consume(TokenType::Semicolon, "Expect ';' after loop condition.")
+
+
+        increment = nil
         if !check(TokenType::RightParen)
             increment = expression()
         end
-
         consume(TokenType::RightParen, "Expect ')' after for clauses.")
 
         body = statement()
@@ -139,6 +147,16 @@ class Parser
         return Stmt::Print.new(value)
     end
 
+    def return_statement() : Stmt
+        keyword = previous()
+        value = nil
+        if !check(TokenType::Semicolon)
+            value = expression()
+        end
+        consume(TokenType::Semicolon, "Expect ';' after return value.")
+        return Stmt::Return.new(keyword, value)
+    end
+
     def var_declaration() : Stmt
         name = consume(TokenType::Identifier, "Expect variable name.")
         
@@ -164,6 +182,27 @@ class Parser
         expr = expression()
         consume(TokenType::Semicolon, "Expect ';' after expression.")
         return Stmt::Expression.new(expr)
+    end
+
+    def function(kind : String) : Stmt::Function
+        name = consume(TokenType::Identifier, "Expect #{kind} name.")
+        consume(TokenType::LeftParen, "Expect '(' after #{kind} name.")
+        parameters = [] of Token
+        if !check(TokenType::RightParen)
+            while true
+                if parameters.size() >= 255
+                    error(peek(), "Can't have more than 255 parameters.")
+                end
+                parameters.push(consume(TokenType::Identifier, "Expect parameter name."))
+                
+                break unless match(TokenType::Comma)
+            end
+        end
+        consume(TokenType::RightParen, "Expect ')' after parameters.")
+
+        consume(TokenType::LeftBrace, "Expect '{' before #{kind} body.")
+        body = block()
+        return Stmt::Function.new(name, parameters, body)
     end
 
     def block() : Array(Stmt)
@@ -235,7 +274,38 @@ class Parser
             return Expr::Unary.new(operator, right)
         end
 
-        return primary()
+        return call()
+    end
+
+    def finish_call(callee)
+        arguments = [] of Expr
+        if !check(TokenType::RightParen)
+            while true
+                if arguments.size >= 255
+                    error(peek(), "Can't have more than 255 arguments.")
+                end
+                arguments.push(expression())
+                break unless match(TokenType::Comma)
+            end
+        end
+
+        paren = consume(TokenType::RightParen, "Expect ')' after arguments.")
+
+        return Expr::Call.new(callee, paren, arguments)
+    end
+
+    def call() : Expr
+        expr : Expr = primary()
+
+        while true
+            if match(TokenType::LeftParen)
+                expr = finish_call(expr)
+            else
+                break
+            end
+        end
+
+        return expr
     end
 
     def primary() : Expr

@@ -12,6 +12,10 @@ class AstPrinter
         return "ASSIGN"
     end
 
+    def visit_call_expr(expr : Expr::Call)
+        return "CLASS"
+    end
+
     def visit_binary_expr(expr : Expr::Binary)
         return parenthesize(expr.operator.lexeme, expr.left, expr.right)
     end

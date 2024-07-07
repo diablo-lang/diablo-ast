@@ -5,6 +5,9 @@ require "./ast_printer"
 require "./expr"
 require "./interpreter"
 require "./stmt"
+require "./diablo_function"
+require "./return"
+require "./clock"
 
 class Diablo
   @@interpreter : Interpreter = Interpreter.new

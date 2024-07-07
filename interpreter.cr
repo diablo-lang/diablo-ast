@@ -1,12 +1,19 @@
 require "./stmt"
 require "./expr"
 require "./environment"
+require "./diablo_callable"
 
 class Interpreter
     include Expr::Visitor(Value)
     include Stmt::Visitor(Nil)
 
-    @environment = Environment.new
+    property globals : Environment
+
+    def initialize()
+        @globals = Environment.new()
+        @environment = @globals
+        @globals.define("clock", Clock.new)
+    end
 
     def interpret(statements : Array(Stmt | Nil))
         begin
@@ -112,6 +119,12 @@ class Interpreter
         return nil
     end
 
+    def visit_function_stmt(stmt : Stmt::Function)
+        function = DiabloFunction.new(stmt, @environment)
+        @environment.define(stmt.name.lexeme, function)
+        return nil
+    end
+
     def visit_if_stmt(stmt : Stmt::If)
         if is_truthy(evaluate(stmt.condition))
             execute(stmt.then_branch)
@@ -126,6 +139,14 @@ class Interpreter
         value = evaluate(stmt.expression)
         puts stringify(value)
         return nil
+    end
+
+    def visit_return_stmt(stmt : Stmt::Return)
+        value : LiteralObject = nil
+        if !stmt.value.nil?
+            value = evaluate(stmt.value.not_nil!)
+        end
+        raise ReturnException.new(value)
     end
 
     def visit_var_stmt(stmt : Stmt::Var)
@@ -193,6 +214,26 @@ class Interpreter
 
         # Unreachable
         return nil
+    end
+
+    def visit_call_expr(expr : Expr::Call)
+        callee : LiteralObject = evaluate(expr.callee)
+        arguments = [] of LiteralObject
+        expr.arguments.each do |argument|
+            arguments.push(evaluate(argument))
+        end
+
+        if !callee.is_a?(DiabloCallable)
+            raise DiabloError::RuntimeError.new(expr.paren, "Can only call functions and classes.")
+        end
+
+        function = callee.as(DiabloCallable)
+
+        if arguments.size != function.arity()
+            raise DiabloError::RuntimeError.new(expr.paren, "Expected #{function.arity()} arguments but got #{arguments.size}.")
+        end
+
+        return function.call(self, arguments)
     end
 
     def is_equal(a : Object, b : Object)

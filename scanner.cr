@@ -1,4 +1,4 @@
-alias LiteralObject = Bool | Char | Float64 | Int32 | Nil | String
+alias LiteralObject = Bool | Char | Float64 | Int32 | Nil | String | DiabloCallable
 
 enum TokenType
     LeftParen

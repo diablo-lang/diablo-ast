@@ -2,6 +2,7 @@ abstract class Expr
   module Visitor(T)
     abstract def visit_assign_expr(expr : Assign)
     abstract def visit_binary_expr(expr : Binary)
+    abstract def visit_call_expr(expr : Call)
     abstract def visit_grouping_expr(expr : Grouping)
     abstract def visit_literal_expr(expr : Literal)
     abstract def visit_logical_expr(expr : Logical)
@@ -25,6 +26,16 @@ abstract class Expr
     end
     def accept(visitor : Visitor)
       return visitor.visit_binary_expr(self)
+    end
+  end
+  class Call < Expr
+    property callee : Expr
+    property paren : Token
+    property arguments : Array(Expr)
+    def initialize(@callee, @paren, @arguments)
+    end
+    def accept(visitor : Visitor)
+      return visitor.visit_call_expr(self)
     end
   end
   class Grouping < Expr

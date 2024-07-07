@@ -15,6 +15,11 @@ class GenerateAst
                 "operator" => "Token",
                 "right" => "Expr"
             },
+            "Call" => {
+                "callee" => "Expr",
+                "paren" => "Token",
+                "arguments" => "Array(Expr)"
+            },
             "Grouping" => {
                 "expression" => "Expr"
             },
@@ -43,6 +48,11 @@ class GenerateAst
             "Expression" => {
                 "expression" => "Expr"
             },
+            "Function" => {
+                "name" => "Token",
+                "params" => "Array(Token)",
+                "body" => "Array(Stmt)"
+            },
             "If" => {
                 "condition" => "Expr",
                 "then_branch" => "Stmt",
@@ -50,6 +60,10 @@ class GenerateAst
             },
             "Print" => {
                 "expression" => "Expr"
+            },
+            "Return" => {
+                "keyword" => "Token",
+                "value" => "Expr | Nil"
             },
             "Var" => {
                 "name" => "Token",
