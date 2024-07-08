@@ -8,6 +8,7 @@ require "./stmt"
 require "./diablo_function"
 require "./return"
 require "./clock"
+require "./resolver"
 
 class Diablo
   @@interpreter : Interpreter = Interpreter.new
@@ -22,9 +23,14 @@ class Diablo
     parser = Parser.new(tokens)
     statements = parser.parse()
     
-    if DiabloError.had_error?
-      return
-    end
+    # Stop if there was a syntax error
+    return if DiabloError.had_error?
+
+    resolver = Resolver.new(@@interpreter)
+    resolver.resolve(statements)
+
+    # Stop if there was a resolution error
+    return if DiabloError.had_error?
 
     unless statements.nil?
       @@interpreter.interpret(statements)

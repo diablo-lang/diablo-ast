@@ -6,7 +6,7 @@ class Parser
     end
 
     def parse() : Array(Stmt | Nil)
-        statements = Array(Stmt | Nil).new
+        statements = [] of Stmt | Nil
 
         while !is_at_end()
             statements.push(declaration())
@@ -66,7 +66,6 @@ class Parser
             return var_declaration() if match(TokenType::Var)
             return statement()
         rescue error : DiabloError::ParseError
-            p "HERE"
             synchronize()
             return nil
         end

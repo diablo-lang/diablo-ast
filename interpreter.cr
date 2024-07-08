@@ -7,10 +7,10 @@ class Interpreter
     include Expr::Visitor(Value)
     include Stmt::Visitor(Nil)
 
-    property globals : Environment
+    property globals : Environment = Environment.new
+    @locals = Hash(Expr, Int32).new
 
     def initialize()
-        @globals = Environment.new()
         @environment = @globals
         @globals.define("clock", Clock.new)
     end
@@ -61,7 +61,16 @@ class Interpreter
     end
 
     def visit_variable_expr(expr : Expr::Variable)
-        return @environment.get(expr.name)
+        return look_up_variable(expr.name, expr)
+    end
+
+    def look_up_variable(name : Token, expr : Expr)
+        distance = @locals[expr]?
+        if !distance.nil?
+            return @environment.get_at(distance, name.lexeme)
+        else
+            return @globals.get(name)
+        end
     end
 
     def check_number_operand(operator : Token, operand : Object)
@@ -94,6 +103,10 @@ class Interpreter
         else
             raise Exception.new
         end
+    end
+
+    def resolve(expr : Expr, depth : Int32)
+        @locals[expr] = depth
     end
 
     def execute_block(statements : Array(Stmt | Nil), environment : Environment)
@@ -168,7 +181,14 @@ class Interpreter
 
     def visit_assign_expr(expr : Expr::Assign)
         value : LiteralObject = evaluate(expr.value)
-        @environment.assign(expr.name, value)
+
+        distance = @locals[expr]?
+        if !distance.nil?
+            @environment.assign_at(distance, expr.name, value)
+        else
+            @globals.assign(expr.name, value)
+        end
+
         return value
     end
 
@@ -223,7 +243,7 @@ class Interpreter
             arguments.push(evaluate(argument))
         end
 
-        if !callee.is_a?(DiabloCallable)
+        unless callee.is_a?(DiabloCallable)
             raise DiabloError::RuntimeError.new(expr.paren, "Can only call functions and classes.")
         end
 

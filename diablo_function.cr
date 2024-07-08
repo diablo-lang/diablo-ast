@@ -1,8 +1,7 @@
 class DiabloFunction < DiabloCallable
     property declaration : Stmt::Function
-    property closure : Environment
 
-    def initialize(@declaration, @closure)
+    def initialize(@declaration : Stmt::Function, @closure : Environment)
     end
 
     def call(interpreter : Interpreter, arguments : Array(LiteralObject)) : LiteralObject

@@ -1,14 +1,12 @@
 class Environment
-    property values : Hash(String, LiteralObject)
+    property values = Hash(String, LiteralObject).new
     property enclosing : Environment | Nil
 
-    def initialize(@enclosing : Environment? = nil)
-        @values = Hash(String, LiteralObject).new
+    def initialize()
         @enclosing = nil
     end
 
     def initialize(enclosing : Environment)
-        @values = Hash(String, LiteralObject).new
         @enclosing = enclosing
     end
 
@@ -40,5 +38,26 @@ class Environment
 
     def define(name : String, value : LiteralObject)
         @values[name] = value
+    end
+
+    def ancestor(distance : Int32)
+        environment = self
+        distance.times do |_|
+            if environment.nil?
+                puts "BAD"
+            else
+                environment = environment.not_nil!.enclosing
+            end
+        end
+
+        return environment
+    end
+
+    def get_at(distance : Int32, name : String)
+        return ancestor(distance).not_nil!.values[name]
+    end
+
+    def assign_at(distance : Int32, name : Token, value : LiteralObject)
+        ancestor(distance).not_nil!.values[name.lexeme] = value
     end
 end
