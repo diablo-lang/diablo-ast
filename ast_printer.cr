@@ -16,6 +16,18 @@ class AstPrinter
         return "CLASS"
     end
 
+    def visit_get_expr(expr : Expr::Get)
+        return "GET"
+    end
+
+    def visit_set_expr(expr : Expr::Set)
+        return "SET"
+    end
+
+    def visit_this_expr(expr : Expr::This)
+        return "THIS"
+    end
+
     def visit_binary_expr(expr : Expr::Binary)
         return parenthesize(expr.operator.lexeme, expr.left, expr.right)
     end

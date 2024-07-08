@@ -9,6 +9,8 @@ require "./diablo_function"
 require "./return"
 require "./clock"
 require "./resolver"
+require "./diablo_class"
+require "./diablo_instance"
 
 class Diablo
   @@interpreter : Interpreter = Interpreter.new

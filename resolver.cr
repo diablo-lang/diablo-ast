@@ -1,6 +1,13 @@
 enum FunctionType
     None
     Function
+    Initializer
+    Method
+end
+
+enum ClassType
+    None
+    Class
 end
 
 class Resolver
@@ -9,6 +16,7 @@ class Resolver
 
     @scopes = [] of Hash(String, Bool)
     @current_function = FunctionType::None
+    @current_class = ClassType::None
 
     def initialize(@interpreter : Interpreter)
     end
@@ -17,6 +25,30 @@ class Resolver
         begin_scope()
         resolve(stmt.statements)
         end_scope()
+        return nil
+    end
+
+    def visit_class_stmt(stmt : Stmt::Class)
+        enclosing_class = @current_class
+        @current_class = ClassType::Class
+
+        declare(stmt.name)
+        define(stmt.name)
+
+        begin_scope()
+        @scopes.last["this"] = true
+
+        stmt.methods.each do |method|
+            declaration = FunctionType::Method
+            if method.name.lexeme == "init"
+                declaration = FunctionType::Initializer
+            end
+            resolve_function(method, declaration)
+        end
+
+        end_scope()
+
+        @current_class = enclosing_class
         return nil
     end
 
@@ -65,6 +97,9 @@ class Resolver
             DiabloError.error(stmt.keyword, "Can't return from top-level code.")
         end
         unless stmt.value.nil?
+            if @current_function == FunctionType::Initializer
+                DiabloError.error(stmt.keyword, "Can't return a value from an initializer.")
+            end
             resolve(stmt.value)
         end
         return nil
@@ -107,6 +142,11 @@ class Resolver
         return nil
     end
 
+    def visit_get_expr(expr : Expr::Get)
+        resolve(expr.object)
+        return nil
+    end
+
     def visit_grouping_expr(expr : Expr::Grouping)
         resolve(expr.expression)
         return nil
@@ -119,6 +159,21 @@ class Resolver
     def visit_logical_expr(expr : Expr::Logical)
         resolve(expr.left)
         resolve(expr.right)
+        return nil
+    end
+
+    def visit_set_expr(expr : Expr::Set)
+        resolve(expr.value)
+        resolve(expr.object)
+        return nil
+    end
+
+    def visit_this_expr(expr : Expr::This)
+        if @current_class == ClassType::None
+            DiabloError.error(expr.keyword, "Can't use 'this' outside of a class.")
+            return nil
+        end
+        resolve_local(expr, expr.keyword)
         return nil
     end
 

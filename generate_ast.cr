@@ -20,6 +20,10 @@ class GenerateAst
                 "paren" => "Token",
                 "arguments" => "Array(Expr)"
             },
+            "Get" => {
+                "object" => "Expr",
+                "name" => "Token"
+            },
             "Grouping" => {
                 "expression" => "Expr"
             },
@@ -30,6 +34,14 @@ class GenerateAst
                 "left" => "Expr",
                 "operator" => "Token",
                 "right" => "Expr"
+            },
+            "Set" => {
+                "object" => "Expr",
+                "name" => "Token",
+                "value" => "Expr"
+            },
+            "This" => {
+                "keyword" => "Token"
             },
             "Unary" => {
                 "operator" => "Token",
@@ -44,6 +56,10 @@ class GenerateAst
         stmt_types = {
             "Block" => {
                 "statements" => "Array(Stmt)"
+            },
+            "Class" => {
+                "name" => "Token",
+                "methods" => "Array(Stmt::Function)"
             },
             "Expression" => {
                 "expression" => "Expr"

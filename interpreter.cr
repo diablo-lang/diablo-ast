@@ -45,6 +45,22 @@ class Interpreter
         return evaluate(expr.right)
     end
 
+    def visit_set_expr(expr : Expr::Set)
+        object = evaluate(expr.object)
+
+        if !object.is_a?(DiabloInstance)
+            raise DiabloError::RuntimeError.new(expr.name, "Only instances have fields.")
+        end
+
+        value = evaluate(expr.value)
+        object.as(DiabloInstance).set(expr.name, value)
+        return value
+    end
+
+    def visit_this_expr(expr : Expr::This)
+        return look_up_variable(expr.keyword, expr)
+    end
+
     def visit_unary_expr(expr : Expr::Unary)
         right : LiteralObject = evaluate(expr.right)
 
@@ -127,13 +143,28 @@ class Interpreter
         return nil
     end
 
+    def visit_class_stmt(stmt : Stmt::Class)
+        @environment.define(stmt.name.lexeme, nil)
+
+        methods = Hash(String, DiabloFunction).new()
+        stmt.methods.each do |method|
+            is_initializer = method.name.lexeme == "init"
+            function = DiabloFunction.new(method, @environment, is_initializer)
+            methods[method.name.lexeme] = function
+        end
+
+        diablo_class = DiabloClass.new(stmt.name.lexeme, methods)
+        @environment.assign(stmt.name, diablo_class)
+        return nil
+    end
+
     def visit_expression_stmt(stmt : Stmt::Expression)
         evaluate(stmt.expression)
         return nil
     end
 
     def visit_function_stmt(stmt : Stmt::Function)
-        function = DiabloFunction.new(stmt, @environment)
+        function = DiabloFunction.new(stmt, @environment, false)
         @environment.define(stmt.name.lexeme, function)
         return nil
     end
@@ -254,6 +285,15 @@ class Interpreter
         end
 
         return function.call(self, arguments)
+    end
+
+    def visit_get_expr(expr : Expr::Get)
+        object : LiteralObject = evaluate(expr.object)
+        if object.is_a?(DiabloInstance)
+            return object.as(DiabloInstance).get(expr.name)
+        end
+
+        raise DiabloError::RuntimeError.new(expr.name, "Only instances have properties.")
     end
 
     def is_equal(a : Object, b : Object)

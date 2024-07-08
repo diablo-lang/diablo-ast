@@ -1,6 +1,7 @@
 abstract class Stmt
   module Visitor(T)
     abstract def visit_block_stmt(stmt : Block)
+    abstract def visit_class_stmt(stmt : Class)
     abstract def visit_expression_stmt(stmt : Expression)
     abstract def visit_function_stmt(stmt : Function)
     abstract def visit_if_stmt(stmt : If)
@@ -15,6 +16,15 @@ abstract class Stmt
     end
     def accept(visitor : Visitor)
       return visitor.visit_block_stmt(self)
+    end
+  end
+  class Class < Stmt
+    property name : Token
+    property methods : Array(Stmt::Function)
+    def initialize(@name, @methods)
+    end
+    def accept(visitor : Visitor)
+      return visitor.visit_class_stmt(self)
     end
   end
   class Expression < Stmt
