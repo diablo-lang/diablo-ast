@@ -162,7 +162,7 @@ class Scanner
             elsif c.letter?
                 identifier()
             else
-                DiabloError.error(@line, "Unexpected character")
+                DiabloError.error(@line, "Unexpected character '#{c}'.")
                 DiabloError.set_error(true)
             end
         end

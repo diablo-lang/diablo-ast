@@ -1,0 +1,25 @@
+class Base {
+    helloWorld() {
+        print("Hello World!");
+    }
+}
+
+class Diablo < Base {
+    init() {
+        this.diablo = "Diablo";
+    }
+
+    hi() {
+        print(this.diablo);
+    }
+}
+
+var diablo = Diablo();
+diablo.helloWorld(); // Hello World!
+diablo.hi(); // Diablo
+
+fun math(a, b, c) {
+    return a + b + c;
+}
+
+print(math(1, 2, 3));
