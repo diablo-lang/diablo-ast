@@ -57,6 +57,21 @@ class Interpreter
         return value
     end
 
+    def visit_super_expr(expr : Expr::Super)
+        distance = @locals[expr]
+        superclass = @environment.get_at(distance, "super").as(DiabloClass)
+
+        object = @environment.get_at(distance - 1, "this").as(DiabloInstance)
+
+        method = superclass.find_method(expr.method.lexeme)
+
+        if method.nil?
+            raise DiabloError::RuntimeError.new(expr.method, "Undefined property '#{expr.method.lexeme}'.")
+        end
+
+        return method.bind(object)
+    end
+
     def visit_this_expr(expr : Expr::This)
         return look_up_variable(expr.keyword, expr)
     end
@@ -144,7 +159,20 @@ class Interpreter
     end
 
     def visit_class_stmt(stmt : Stmt::Class)
+        superclass = nil
+        unless stmt.superclass.nil?
+            superclass = evaluate(stmt.superclass.not_nil!)
+            unless superclass.is_a?(DiabloClass)
+                raise DiabloError::RuntimeError.new(stmt.superclass.not_nil!.name, "Superclass must be a class.")
+            end
+        end
+
         @environment.define(stmt.name.lexeme, nil)
+
+        unless stmt.superclass.nil?
+            @environment = Environment.new(@environment)
+            @environment.define("super", superclass)
+        end
 
         methods = Hash(String, DiabloFunction).new()
         stmt.methods.each do |method|
@@ -153,7 +181,12 @@ class Interpreter
             methods[method.name.lexeme] = function
         end
 
-        diablo_class = DiabloClass.new(stmt.name.lexeme, methods)
+        diablo_class = DiabloClass.new(stmt.name.lexeme, superclass, methods)
+
+        unless superclass.nil?
+            @environment = @environment.enclosing.not_nil!
+        end
+
         @environment.assign(stmt.name, diablo_class)
         return nil
     end

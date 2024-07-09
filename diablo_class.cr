@@ -1,14 +1,20 @@
 class DiabloClass < DiabloCallable
     property name : String
     property methods : Hash(String, DiabloFunction)
+    property superclass : DiabloClass | Nil
 
-    def initialize(@name : String, @methods : Hash(String, DiabloFunction))
+    def initialize(@name : String, @superclass : DiabloClass | Nil, @methods : Hash(String, DiabloFunction))
     end
 
     def find_method(name : String)
         if @methods.has_key?(name)
             return @methods[name]
         end
+
+        unless @superclass.nil?
+            return @superclass.not_nil!.find_method(name)
+        end
+
         return nil
     end
 

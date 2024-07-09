@@ -20,8 +20,9 @@ abstract class Stmt
   end
   class Class < Stmt
     property name : Token
+    property superclass : Expr::Variable | Nil
     property methods : Array(Stmt::Function)
-    def initialize(@name, @methods)
+    def initialize(@name, @superclass, @methods)
     end
     def accept(visitor : Visitor)
       return visitor.visit_class_stmt(self)

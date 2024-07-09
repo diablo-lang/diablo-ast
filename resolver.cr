@@ -8,6 +8,7 @@ end
 enum ClassType
     None
     Class
+    Subclass
 end
 
 class Resolver
@@ -35,6 +36,20 @@ class Resolver
         declare(stmt.name)
         define(stmt.name)
 
+        if !stmt.superclass.nil? && stmt.name.lexeme == stmt.superclass.not_nil!.name.lexeme
+            DiabloError.error(stmt.superclass.not_nil!.name, "A class can't inherit from itself.")
+        end
+
+        unless stmt.superclass.nil?
+            @current_class = ClassType::Subclass
+            resolve(stmt.superclass)
+        end
+
+        unless stmt.superclass.nil?
+            begin_scope()
+            @scopes.last["super"] = true
+        end
+
         begin_scope()
         @scopes.last["this"] = true
 
@@ -47,6 +62,10 @@ class Resolver
         end
 
         end_scope()
+
+        unless stmt.superclass.nil?
+            end_scope()
+        end
 
         @current_class = enclosing_class
         return nil
@@ -165,6 +184,16 @@ class Resolver
     def visit_set_expr(expr : Expr::Set)
         resolve(expr.value)
         resolve(expr.object)
+        return nil
+    end
+
+    def visit_super_expr(expr : Expr::Super)
+        if @current_class == ClassType::None
+            DiabloError.error(expr.keyword, "Can't use 'super' outside of a class.")
+        elsif @current_class != ClassType::Subclass
+            DiabloError.error(expr.keyword, "Can't use 'super' in a class with no superclass.")
+        end
+        resolve_local(expr, expr.keyword)
         return nil
     end
 

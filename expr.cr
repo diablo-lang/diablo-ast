@@ -8,6 +8,7 @@ abstract class Expr
     abstract def visit_literal_expr(expr : Literal)
     abstract def visit_logical_expr(expr : Logical)
     abstract def visit_set_expr(expr : Set)
+    abstract def visit_super_expr(expr : Super)
     abstract def visit_this_expr(expr : This)
     abstract def visit_unary_expr(expr : Unary)
     abstract def visit_variable_expr(expr : Variable)
@@ -84,6 +85,15 @@ abstract class Expr
     end
     def accept(visitor : Visitor)
       return visitor.visit_set_expr(self)
+    end
+  end
+  class Super < Expr
+    property keyword : Token
+    property method : Token
+    def initialize(@keyword, @method)
+    end
+    def accept(visitor : Visitor)
+      return visitor.visit_super_expr(self)
     end
   end
   class This < Expr

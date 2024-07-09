@@ -77,6 +77,13 @@ class Parser
 
     def class_declaration()
         name = consume(TokenType::Identifier, "Expect class name.")
+
+        superclass = nil
+        if match(TokenType::Less)
+            consume(TokenType::Identifier, "Expect superclass name.")
+            superclass = Expr::Variable.new(previous())
+        end
+
         consume(TokenType::LeftBrace, "Expect '{' before class body.")
         methods = [] of Stmt::Function
         while !check(TokenType::RightBrace) && !is_at_end()
@@ -84,7 +91,7 @@ class Parser
         end
 
         consume(TokenType::RightBrace, "Expect '}' after class body.")
-        return Stmt::Class.new(name, methods)
+        return Stmt::Class.new(name, superclass, methods)
     end
 
     def statement() : Stmt
@@ -333,6 +340,13 @@ class Parser
 
         if match(TokenType::Number, TokenType::String)
             return Expr::Literal.new(previous().literal)
+        end
+
+        if match(TokenType::Super)
+            keyword = previous()
+            consume(TokenType::Dot, "Expect '.' after 'super'.")
+            method = consume(TokenType::Identifier, "Expect superclass method name.")
+            return Expr::Super.new(keyword, method)
         end
 
         if match(TokenType::This)

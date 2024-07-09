@@ -28,6 +28,10 @@ class AstPrinter
         return "THIS"
     end
 
+    def visit_super_expr(expr : Expr::Super)
+        return "SUPER"
+    end
+
     def visit_binary_expr(expr : Expr::Binary)
         return parenthesize(expr.operator.lexeme, expr.left, expr.right)
     end

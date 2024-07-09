@@ -40,6 +40,10 @@ class GenerateAst
                 "name" => "Token",
                 "value" => "Expr"
             },
+            "Super" => {
+                "keyword" => "Token",
+                "method" => "Token"
+            },
             "This" => {
                 "keyword" => "Token"
             },
@@ -59,6 +63,7 @@ class GenerateAst
             },
             "Class" => {
                 "name" => "Token",
+                "superclass" => "Expr::Variable | Nil",
                 "methods" => "Array(Stmt::Function)"
             },
             "Expression" => {
